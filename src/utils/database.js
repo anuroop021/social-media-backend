@@ -9,16 +9,27 @@ let pool;
  */
 const initializePool = () => {
 	if (!pool) {
-		pool = new Pool({
-			host: process.env.DB_HOST,
-			port: process.env.DB_PORT,
-			database: process.env.DB_NAME,
-			user: process.env.DB_USER,
-			password: process.env.DB_PASSWORD,
-			max: 20,
-			idleTimeoutMillis: 30000,
-			connectionTimeoutMillis: 2000,
-		});
+		// Use DATABASE_URL if available (for cloud deployment like Render)
+		if (process.env.DATABASE_URL) {
+			pool = new Pool({
+				connectionString: process.env.DATABASE_URL,
+				ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+				max: 20,
+				idleTimeoutMillis: 30000,
+				connectionTimeoutMillis: 2000,
+			});
+		} else {
+			pool = new Pool({
+				host: process.env.DB_HOST,
+				port: process.env.DB_PORT,
+				database: process.env.DB_NAME,
+				user: process.env.DB_USER,
+				password: process.env.DB_PASSWORD,
+				max: 20,
+				idleTimeoutMillis: 30000,
+				connectionTimeoutMillis: 2000,
+			});
+		}
 
 		pool.on("error", (err) => {
 			logger.critical("Unexpected error on idle client", err);
